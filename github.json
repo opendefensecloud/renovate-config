@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "customManagers": [
+   {
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/).github/workflows/[^/]+\\.ya?ml$/"],
+      "matchStrings": [
+        "runs-on:\\s*(?<depName>\\w+)-(?<currentValue>[\\d.]+)"
+      ],
+      "datasourceTemplate": "github-runners",
+      "versioningTemplate": "docker"
+    }
+  ]
+}
