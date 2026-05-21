@@ -1,7 +1,39 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
+  "semanticCommits": "enabled",
   "pinDigests": true,
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "Auto-merge patch and digest updates after a 3-day stability window",
+      "matchUpdateTypes": ["patch", "digest"],
+      "matchVulnerabilityAlerts": false,
+      "groupName": "patch and digest updates",
+      "groupSlug": "all-patch-updates",
+      "minimumReleaseAge": "3 days",
+      "schedule": ["before 5am on Monday"],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge minor updates after a 3-day stability window",
+      "matchUpdateTypes": ["minor"],
+      "matchVulnerabilityAlerts": false,
+      "groupName": "minor updates",
+      "groupSlug": "all-minor-updates",
+      "minimumReleaseAge": "3 days",
+      "schedule": ["before 5am on Monday"],
+      "automerge": true
+    },
+    {
+      "description": "Security fixes: immediate PR, high priority, no auto-merge — reviewer should understand CVE impact",
+      "matchVulnerabilityAlerts": true,
+      "automerge": false,
+      "schedule": null,
+      "prPriority": 10,
+      "labels": ["security", "high-priority"]
+    }
+  ],
   "customManagers": [
     {
       "customType": "regex",
