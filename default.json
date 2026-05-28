@@ -4,34 +4,35 @@
   "semanticCommits": "enabled",
   "pinDigests": true,
   "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "schedule": [],
+    "minimumReleaseAge": null,
+    "automerge": false,
+    "prPriority": 10,
+    "addLabels": ["security"]
+  },
   "packageRules": [
     {
       "description": "Auto-merge patch and digest updates after a 3-day stability window",
       "matchUpdateTypes": ["patch", "digest"],
       "matchVulnerabilityAlerts": false,
-      "groupName": "patch and digest updates",
-      "groupSlug": "all-patch-updates",
+      "groupName": "dependencies (patch & digest)",
+      "groupSlug": "all-patch-and-digest-updates",
       "minimumReleaseAge": "3 days",
       "schedule": ["before 5am on Monday"],
-      "automerge": true
+      "automerge": true,
+      "addLabels": ["ok-to-image"]
     },
     {
       "description": "Auto-merge minor updates after a 3-day stability window",
       "matchUpdateTypes": ["minor"],
       "matchVulnerabilityAlerts": false,
-      "groupName": "minor updates",
+      "groupName": "dependencies (minor)",
       "groupSlug": "all-minor-updates",
       "minimumReleaseAge": "3 days",
       "schedule": ["before 5am on Monday"],
-      "automerge": true
-    },
-    {
-      "description": "Security fixes: immediate PR, high priority, no auto-merge — reviewer should understand CVE impact",
-      "matchVulnerabilityAlerts": true,
-      "automerge": false,
-      "schedule": null,
-      "prPriority": 10,
-      "labels": ["security", "high-priority"]
+      "automerge": true,
+      "addLabels": ["ok-to-image"]
     }
   ],
   "customManagers": [

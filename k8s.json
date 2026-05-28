@@ -2,6 +2,12 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
+      "description": "Add ok-to-helm label to automerge-eligible PRs in k8s repos",
+      "matchUpdateTypes": ["patch", "digest", "minor"],
+      "matchVulnerabilityAlerts": false,
+      "addLabels": ["ok-to-helm"]
+    },
+    {
       "description": "Group k8s.io/*, controller-runtime, controller-tools, Helm v4, and OCM together — they share k8s library dependencies and must use the exact same version; bumping any one without the others breaks the build",
       "matchManagers": ["gomod"],
       "matchPackageNames": [
@@ -12,13 +18,14 @@
         "ocm.software/ocm"
       ],
       "groupName": "kubernetes dependencies",
-      "groupSlug": "k8s-deps"
+      "groupSlug": "k8s-updates",
+      "addLabels": ["ok-to-image", "ok-to-helm"]
     },
     {
       "description": "Include envtest Kubernetes version (ENVTEST_K8S_VERSION in Makefile) in the same group",
       "matchPackageNames": ["kubernetes/kubernetes"],
       "groupName": "kubernetes dependencies",
-      "groupSlug": "k8s-deps"
+      "groupSlug": "k8s-updates"
     }
   ],
   "customManagers": [
