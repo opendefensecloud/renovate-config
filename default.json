@@ -13,7 +13,7 @@
   },
   "packageRules": [
     {
-      "description": "Auto-merge patch and digest updates after a 3-day stability window",
+      "description": "Auto-merge patch and digest updates: patch updates wait a 3-day stability window",
       "matchUpdateTypes": ["patch", "digest"],
       "matchVulnerabilityAlerts": false,
       "groupName": "dependencies (patch & digest)",
@@ -22,6 +22,11 @@
       "schedule": ["before 5am on Monday"],
       "automerge": true,
       "addLabels": ["ok-to-image"]
+    },
+    {
+      "description": "Skip minimum release age requirement for digest updates since they often lack a release timestamp",
+      "matchUpdateTypes": ["digest"],
+      "minimumReleaseAge": null
     },
     {
       "description": "Auto-merge minor updates after a 3-day stability window",
