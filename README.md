@@ -33,7 +33,7 @@ This config implements a "trust but verify" model that automates low-risk update
 
 | Update type | Behaviour | Rationale |
 |---|---|---|
-| **Patch, Digest** | Grouped into one PR, auto-merged once CI passes (after 3-day stability window) | Low breaking-change risk; 3-day window catches most supply-chain incidents before they hit us |
+| **Patch, Digest** | Grouped into one PR, auto-merged once CI passes (patch updates after a 3-day stability window; digest updates immediately) | Low breaking-change risk; 3-day window on patches catches most supply-chain incidents before they hit us |
 | **Minor** | Grouped into one PR, auto-merged once CI passes (after 3-day stability window) | Semver guarantees backwards compatibility; CI catches regressions |
 | **Major** | Individual PRs, requires manual approval | Breaking changes expected; must be reviewed in isolation |
 | **Security** | Individual PR, labeled `security`, requires manual approval, no stability window | Reviewer adds real value here — understanding CVE impact; no delay warranted for known vulnerabilities |
@@ -41,7 +41,7 @@ This config implements a "trust but verify" model that automates low-risk update
 ### Supply-chain security measures
 
 - **Digest pinning** (`pinDigests: true`) — Docker images and GitHub Actions are pinned to immutable SHA-256 digests instead of mutable tags, preventing moving-tag attacks.
-- **Stability window** (`minimumReleaseAge: 3 days` for patches, digest, and minor) — Renovate will not auto-merge a patch, digest or minor update until the package version has been published for at least 3 days. This provides time for the community to detect and flag malicious releases before they land in the codebase.
+- **Stability window** (`minimumReleaseAge: 3 days` for patches and minor) — Renovate will not auto-merge a patch or minor update until the package version has been published for at least 3 days. This provides time for the community to detect and flag malicious releases before they land in the codebase. Digest updates are exempt (`minimumReleaseAge: null`) since a re-pinned digest often carries no meaningful release age.
 
 ### Requirements for auto-merge
 
