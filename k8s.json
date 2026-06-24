@@ -22,8 +22,8 @@
       "addLabels": ["ok-to-image", "ok-to-helm"]
     },
     {
-      "description": "Include envtest Kubernetes version (ENVTEST_K8S_VERSION in Makefile) in the same group",
-      "matchPackageNames": ["kubernetes/kubernetes"],
+      "description": "Include envtest Kubernetes version (ENVTEST_K8S_VERSION in Makefile) in the same group; version is capped by kindest/node availability",
+      "matchPackageNames": ["kindest/node"],
       "groupName": "kubernetes dependencies",
       "groupSlug": "k8s-updates"
     }
@@ -35,8 +35,8 @@
       "matchStrings": [
         "ENVTEST_K8S_VERSION \\?= (?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "kubernetes/kubernetes",
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "kindest/node",
       "versioningTemplate": "semver",
       "extractVersionTemplate": "^v(?<version>.+)$"
     }
