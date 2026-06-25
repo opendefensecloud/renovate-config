@@ -40,6 +40,11 @@
       "addLabels": ["ok-to-image"]
     },
     {
+      "description": "Label major updates ok-to-image",
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["ok-to-image"]
+    },
+    {
       "description": "Disable digest pinning for tools inside GitHub Actions",
       "matchManagers": ["github-actions"],
       "matchDepNames": ["helm"],
