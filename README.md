@@ -35,13 +35,13 @@ This config implements a "trust but verify" model that automates low-risk update
 |---|---|---|
 | **Patch, Digest** | Grouped into one PR, auto-merged once CI passes (patch updates after a 3-day stability window; digest updates immediately) | Low breaking-change risk; 3-day window on patches catches most supply-chain incidents before they hit us |
 | **Minor** | Grouped into one PR, auto-merged once CI passes (after 3-day stability window) | Semver guarantees backwards compatibility; CI catches regressions |
-| **Major** | Individual PRs, requires manual approval | Breaking changes expected; must be reviewed in isolation |
+| **Major** | Individual PRs, requires manual approval (after a 10-day stability window) | Breaking changes expected; must be reviewed in isolation; longer window since major releases are more prone to early regressions |
 | **Security** | Individual PR, labeled `security`, requires manual approval, no stability window | Reviewer adds real value here — understanding CVE impact; no delay warranted for known vulnerabilities |
 
 ### Supply-chain security measures
 
 - **Digest pinning** (`pinDigests: true`) — Docker images and GitHub Actions are pinned to immutable SHA-256 digests instead of mutable tags, preventing moving-tag attacks.
-- **Stability window** (`minimumReleaseAge: 3 days` for patches and minor) — Renovate will not auto-merge a patch or minor update until the package version has been published for at least 3 days. This provides time for the community to detect and flag malicious releases before they land in the codebase. Digest updates are exempt (`minimumReleaseAge: null`) since a re-pinned digest often carries no meaningful release age.
+- **Stability window** (`minimumReleaseAge: 3 days` for patches and minor, `10 days` for major) — Renovate will not merge an update until the package version has been published for at least this long. This provides time for the community to detect and flag malicious releases before they land in the codebase. Major updates use a longer 10-day window since they carry more risk and are more prone to early regressions. Digest updates are exempt (`minimumReleaseAge: null`) since a re-pinned digest often carries no meaningful release age. Security updates (vulnerability alerts) bypass the stability window entirely (`matchVulnerabilityAlerts: false` on each update-type rule) — no delay is warranted for known vulnerabilities.
 
 ### Requirements for auto-merge
 
