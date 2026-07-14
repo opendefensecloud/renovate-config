@@ -40,8 +40,10 @@
       "addLabels": ["ok-to-image"]
     },
     {
-      "description": "Label major updates ok-to-image",
+      "description": "Set minimum release age requirement for major updates to 10 days",
       "matchUpdateTypes": ["major"],
+      "matchVulnerabilityAlerts": false,
+      "minimumReleaseAge": "10 days",
       "addLabels": ["ok-to-image"]
     },
     {
