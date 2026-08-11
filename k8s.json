@@ -4,7 +4,6 @@
     {
       "description": "Add ok-to-helm label to automerge-eligible PRs in k8s repos",
       "matchUpdateTypes": ["patch", "digest", "minor"],
-      "matchVulnerabilityAlerts": false,
       "addLabels": ["ok-to-helm"]
     },
     {
