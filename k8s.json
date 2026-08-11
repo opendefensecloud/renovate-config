@@ -30,7 +30,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["Makefile"],
+      "managerFilePatterns": ["/(^|/)Makefile$/"],
       "matchStrings": [
         "ENVTEST_K8S_VERSION \\?= (?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
