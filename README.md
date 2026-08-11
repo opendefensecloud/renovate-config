@@ -30,7 +30,7 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 
 ## Workflows
 
-- `renovate-auto-approve.yml` — reusable (`workflow_call`) workflow that approves Renovate PRs labeled `automerge` and skips any PR labeled `security`, so digest/patch/minor updates merge without a human while major and security updates still need a review. See [Enabling automerge in a consuming repo](#enabling-automerge-in-a-consuming-repo).
+- `renovate-auto-approve.yml` — reusable (`workflow_call`) workflow that approves Renovate PRs labeled `automerge` and skips any PR labeled `security`. If a PR gains the `security` label after it was already auto-approved, the workflow revokes its own approval, so digest/patch/minor updates merge without a human while major and security updates still need a review. See [Enabling automerge in a consuming repo](#enabling-automerge-in-a-consuming-repo).
 
 ## Dependency Update Workflow
 
@@ -77,7 +77,7 @@ jobs:
       pull-requests: write
 ```
 
-Pin `@<sha-or-tag>` to a released tag or commit SHA, same discipline we apply to actions and images. The workflow approves only PRs carrying the `automerge` label and skips any PR labeled `security`, so digest/patch/minor updates get approved automatically while major and security updates wait for a human.
+Pin `@<sha-or-tag>` to a released tag or commit SHA, same discipline we apply to actions and images. The workflow approves only PRs carrying the `automerge` label and skips any PR labeled `security`, so digest/patch/minor updates get approved automatically while major and security updates wait for a human. If a PR gains the `security` label after it was auto-approved, the workflow revokes its approval (via a `request-changes` review) so a human is required again. It triggers on the `labeled` event for this reason, so keep that in the caller's `pull_request` types.
 
 ### 2. Configure GitHub settings
 

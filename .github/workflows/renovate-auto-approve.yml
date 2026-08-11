@@ -8,10 +8,10 @@ name: renovate-auto-approve
 #       permissions:
 #         pull-requests: write
 #
-# It approves a Renovate PR only when the PR carries the automerge label and
-# does not carry the block label (security). The merge itself stays gated on
-# the repo's required status checks, so digest/patch/minor updates merge
-# without a human while major and security updates still need a review.
+# It approves a Renovate PR that carries the automerge label and not the block
+# label (security). If a PR later gains the block label, it revokes its own
+# earlier approval so a human is required again. The merge itself always stays
+# gated on the repo's required status checks.
 
 on:
   workflow_call:
@@ -21,7 +21,7 @@ on:
         type: string
         default: automerge
       block-label:
-        description: Label that blocks auto-approval even when the automerge label is present.
+        description: Label that blocks auto-approval, and revokes an earlier one.
         type: string
         default: security
       renovate-actor:
@@ -38,21 +38,34 @@ jobs:
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.user.login == inputs.renovate-actor &&
-      contains(github.event.pull_request.labels.*.name, inputs.automerge-label) &&
-      !contains(github.event.pull_request.labels.*.name, inputs.block-label)
+      (contains(github.event.pull_request.labels.*.name, inputs.automerge-label) ||
+       contains(github.event.pull_request.labels.*.name, inputs.block-label))
     steps:
-      - name: Approve the pull request if not already approved
+      - name: Approve, or revoke a prior approval if the block label appears
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           LABEL: ${{ inputs.automerge-label }}
+          BLOCK_LABEL: ${{ inputs.block-label }}
+          HAS_BLOCK: ${{ contains(github.event.pull_request.labels.*.name, inputs.block-label) }}
         run: |
           set -euo pipefail
-          already=$(gh pr view "$PR_NUMBER" --json reviews \
-            --jq '[.reviews[] | select((.author.login // "" | ascii_downcase) | startswith("github-actions")) | select(.state == "APPROVED")] | length')
-          if [ "$already" -gt 0 ]; then
-            echo "Pull request already approved by github-actions; nothing to do."
+          # Latest review state left by this workflow's identity (github-actions[bot]).
+          latest_state=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER/reviews" \
+            --jq 'map(select((.user.login // "" | ascii_downcase) | startswith("github-actions"))) | last | .state // empty')
+          if [ "$HAS_BLOCK" = "true" ]; then
+            if [ "$latest_state" = "APPROVED" ]; then
+              echo "PR now carries the $BLOCK_LABEL label; revoking the earlier automated approval."
+              gh pr review "$PR_NUMBER" --request-changes \
+                --body "Revoked: this PR is now labeled \`$BLOCK_LABEL\` and needs a human review."
+            else
+              echo "PR carries the $BLOCK_LABEL label; no automated approval to revoke."
+            fi
+            exit 0
+          fi
+          if [ "$latest_state" = "APPROVED" ]; then
+            echo "Already approved by github-actions; nothing to do."
             exit 0
           fi
           gh pr review "$PR_NUMBER" --approve \
