@@ -1,0 +1,59 @@
+name: renovate-auto-approve
+
+# Reusable workflow. A consuming repo triggers it on pull_request and calls it:
+#
+#   jobs:
+#     approve:
+#       uses: opendefensecloud/renovate-config/.github/workflows/renovate-auto-approve.yml@<sha-or-tag>
+#       permissions:
+#         pull-requests: write
+#
+# It approves a Renovate PR only when the PR carries the automerge label and
+# does not carry the block label (security). The merge itself stays gated on
+# the repo's required status checks, so digest/patch/minor updates merge
+# without a human while major and security updates still need a review.
+
+on:
+  workflow_call:
+    inputs:
+      automerge-label:
+        description: Label that marks a Renovate PR as safe to auto-approve.
+        type: string
+        default: automerge
+      block-label:
+        description: Label that blocks auto-approval even when the automerge label is present.
+        type: string
+        default: security
+      renovate-actor:
+        description: Login of the Renovate app that authors the pull requests.
+        type: string
+        default: renovate[bot]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login == inputs.renovate-actor &&
+      contains(github.event.pull_request.labels.*.name, inputs.automerge-label) &&
+      !contains(github.event.pull_request.labels.*.name, inputs.block-label)
+    steps:
+      - name: Approve the pull request if not already approved
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LABEL: ${{ inputs.automerge-label }}
+        run: |
+          set -euo pipefail
+          already=$(gh pr view "$PR_NUMBER" --json reviews \
+            --jq '[.reviews[] | select((.author.login // "" | ascii_downcase) | startswith("github-actions")) | select(.state == "APPROVED")] | length')
+          if [ "$already" -gt 0 ]; then
+            echo "Pull request already approved by github-actions; nothing to do."
+            exit 0
+          fi
+          gh pr review "$PR_NUMBER" --approve \
+            --body "Auto-approved: Renovate \`$LABEL\` update. Merge remains gated on required status checks."
