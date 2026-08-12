@@ -63,7 +63,7 @@ The reusable workflow lives in [`opendefensecloud/dev-kit`](https://github.com/o
 name: renovate-auto-approve
 on:
   pull_request:
-    types: [opened, reopened, synchronize, labeled]
+    types: [opened, reopened, synchronize, labeled, unlabeled]
 permissions:
   pull-requests: write
 jobs:
@@ -73,7 +73,7 @@ jobs:
       pull-requests: write
 ```
 
-Pin `@<sha-or-tag>` to a released tag or commit SHA, same discipline we apply to actions and images. The workflow approves only PRs carrying the `automerge` label and skips any PR labeled `security`, so digest/patch/minor updates get approved automatically while major and security updates wait for a human. If a PR gains the `security` label after it was auto-approved, the workflow revokes its approval (via a `request-changes` review) so a human is required again. It triggers on the `labeled` event for this reason, so keep that in the caller's `pull_request` types.
+Pin `@<sha-or-tag>` to a released tag or commit SHA, same discipline we apply to actions and images. The workflow approves only PRs carrying the `automerge` label and skips any PR labeled `security`, so digest/patch/minor updates get approved automatically while major and security updates wait for a human. If a PR gains the `security` label after it was auto-approved, the workflow revokes its approval (via a `request-changes` review) so a human is required again. It triggers on the `labeled` and `unlabeled` events for this reason (so adding or removing `security` re-evaluates the PR), so keep those in the caller's `pull_request` types.
 
 ### 2. Configure GitHub settings
 
