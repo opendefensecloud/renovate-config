@@ -28,10 +28,6 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 - Tracks the Kubernetes version used by `envtest` in `Makefile` (`ENVTEST_K8S_VERSION`)
 - Groups all `k8s.io/**`, `sigs.k8s.io/controller-runtime`, `sigs.k8s.io/controller-tools`, `helm.sh/helm/v4`, `ocm.software/ocm`, and `ENVTEST_K8S_VERSION` updates into a single PR — they share k8s library dependencies and must use the exact same version; bumping any one without the others breaks the build
 
-## Workflows
-
-- `renovate-auto-approve.yml` — reusable (`workflow_call`) workflow that approves Renovate PRs labeled `automerge` and skips any PR labeled `security`. If a PR gains the `security` label after it was already auto-approved, the workflow revokes its own approval, so digest/patch/minor updates merge without a human while major and security updates still need a review. See [Enabling automerge in a consuming repo](#enabling-automerge-in-a-consuming-repo).
-
 ## Dependency Update Workflow
 
 This config implements a "trust but verify" model that automates low-risk updates while keeping humans in the loop for anything that could introduce breaking changes.
@@ -61,7 +57,7 @@ The presets set `automerge: true` for digest, patch, and minor updates, but Reno
 
 ### 1. Call the auto-approve workflow
 
-Add `.github/workflows/renovate-auto-approve.yml`:
+The reusable workflow lives in [`opendefensecloud/dev-kit`](https://github.com/opendefensecloud/dev-kit). Repos that copy dev-kit's `example/` already ship this caller. Otherwise add `.github/workflows/renovate-auto-approve.yml`:
 
 ```yaml
 name: renovate-auto-approve
@@ -72,7 +68,7 @@ permissions:
   pull-requests: write
 jobs:
   approve:
-    uses: opendefensecloud/renovate-config/.github/workflows/renovate-auto-approve.yml@<sha-or-tag>
+    uses: opendefensecloud/dev-kit/.github/workflows/renovate-auto-approve.yml@<sha-or-tag>
     permissions:
       pull-requests: write
 ```
