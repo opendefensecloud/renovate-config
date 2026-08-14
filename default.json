@@ -8,20 +8,18 @@
     "schedule": [],
     "minimumReleaseAge": null,
     "automerge": false,
-    "prPriority": 10,
     "addLabels": ["security"]
   },
   "packageRules": [
     {
       "description": "Auto-merge patch and digest updates: patch updates wait a 3-day stability window",
       "matchUpdateTypes": ["patch", "digest"],
-      "matchVulnerabilityAlerts": false,
       "groupName": "dependencies (patch & digest)",
       "groupSlug": "all-patch-and-digest-updates",
       "minimumReleaseAge": "3 days",
       "schedule": ["before 5am on Monday"],
       "automerge": true,
-      "addLabels": ["ok-to-image"]
+      "addLabels": ["ok-to-image", "automerge"]
     },
     {
       "description": "Skip minimum release age requirement for digest updates since they often lack a release timestamp",
@@ -31,18 +29,16 @@
     {
       "description": "Auto-merge minor updates after a 3-day stability window",
       "matchUpdateTypes": ["minor"],
-      "matchVulnerabilityAlerts": false,
       "groupName": "dependencies (minor)",
       "groupSlug": "all-minor-updates",
       "minimumReleaseAge": "3 days",
       "schedule": ["before 5am on Monday"],
       "automerge": true,
-      "addLabels": ["ok-to-image"]
+      "addLabels": ["ok-to-image", "automerge"]
     },
     {
       "description": "Set minimum release age requirement for major updates to 10 days",
       "matchUpdateTypes": ["major"],
-      "matchVulnerabilityAlerts": false,
       "minimumReleaseAge": "10 days",
       "addLabels": ["ok-to-image"]
     },
@@ -56,7 +52,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["Makefile"],
+      "managerFilePatterns": ["/(^|/)Makefile$/"],
       "matchStrings": [
         "DEV_KIT_VERSION := (?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
