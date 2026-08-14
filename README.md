@@ -16,7 +16,7 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 - Pins Docker images and GitHub Actions to SHA digests (`pinDigests: true`) to prevent moving-tag attacks
 - Tracks `opendefensecloud/dev-kit` releases in `Makefile` (`DEV_KIT_VERSION`)
 - Tracks Go tool versions in `tools.lock`
-- Adds an `automerge` label to digest, patch, and minor PRs (the signal the auto-approve workflow reacts to); major and security PRs never get it
+- Adds an `automerge` label to digest and patch PRs (the signal the auto-approve workflow reacts to); minor, major, and security PRs never get it
 
 ### `go.json`
 - Runs `go mod tidy` after updates
@@ -35,7 +35,7 @@ This config implements a "trust but verify" model that automates low-risk update
 | Update type | Behaviour | Rationale |
 |---|---|---|
 | **Patch, Digest** | Grouped into one PR, auto-merged once CI passes (patch updates after a 3-day stability window; digest updates immediately) | Low breaking-change risk; 3-day window on patches catches most supply-chain incidents before they hit us |
-| **Minor** | Grouped into one PR, auto-merged once CI passes (after 3-day stability window) | Semver guarantees backwards compatibility; CI catches regressions |
+| **Minor** | Grouped into one PR, requires manual approval (after 3-day stability window) | Semver promises backwards compatibility, but minors still ship behaviour changes in practice; a human look is cheap on one weekly grouped PR |
 | **Major** | Individual PRs, requires manual approval (after a 10-day stability window) | Breaking changes expected; must be reviewed in isolation; longer window since major releases are more prone to early regressions |
 | **Security** | Individual PR, labeled `security`, requires manual approval, no stability window | Reviewer adds real value here — understanding CVE impact; no delay warranted for known vulnerabilities |
 
@@ -53,7 +53,7 @@ Renovate auto-merge requires:
 
 ## Enabling automerge in a consuming repo
 
-The presets set `automerge: true` for digest, patch, and minor updates, but Renovate cannot approve its own PRs. Two things unblock it per repo.
+The presets set `automerge: true` for digest and patch updates, but Renovate cannot approve its own PRs. Two things unblock it per repo.
 
 ### 1. Call the auto-approve workflow
 
@@ -73,7 +73,7 @@ jobs:
       pull-requests: write
 ```
 
-Pin `@<sha-or-tag>` to a released tag or commit SHA, same discipline we apply to actions and images. The workflow approves only PRs carrying the `automerge` label and skips any PR labeled `security`, so digest/patch/minor updates get approved automatically while major and security updates wait for a human. If a PR gains the `security` label after it was auto-approved, the workflow revokes its approval (via a `request-changes` review) so a human is required again. It triggers on the `labeled` and `unlabeled` events for this reason (so adding or removing `security` re-evaluates the PR), so keep those in the caller's `pull_request` types.
+Pin `@<sha-or-tag>` to a released tag or commit SHA, same discipline we apply to actions and images. The workflow approves only PRs carrying the `automerge` label and skips any PR labeled `security`, so digest/patch updates get approved automatically while minor, major, and security updates wait for a human. If a PR gains the `security` label after it was auto-approved, the workflow revokes its approval (via a `request-changes` review) so a human is required again. It triggers on the `labeled` and `unlabeled` events for this reason (so adding or removing `security` re-evaluates the PR), so keep those in the caller's `pull_request` types.
 
 ### 2. Configure GitHub settings
 
