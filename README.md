@@ -14,15 +14,18 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 - Extends `config:recommended`
 - Conventional commit messages (`semanticCommits: enabled`)
 - Pins Docker images and GitHub Actions to SHA digests (`pinDigests: true`) to prevent moving-tag attacks
-- Tracks `opendefensecloud/dev-kit` releases in `Makefile` (`DEV_KIT_VERSION`)
+- Tracks `opendefensecloud/dev-kit` releases in `Makefile` (`DEV_KIT_VERSION`) and in the `flake.nix` input, in the form `github:opendefensecloud/dev-kit/vX.Y.Z` only (an unpinned `github:opendefensecloud/dev-kit` or a `?ref=` form is not tracked). All dev-kit pins resolve through `github-tags`, the datasource GitHub Actions pins use, so one PR never mixes versions
+- Groups every dev-kit pin (`Makefile`, `flake.nix`, GitHub Actions and reusable workflows) into one `dev-kit` PR that is never automerged. Renovate bumps the flake input with a regex manager, which can't touch `flake.lock`, and the nix manager only re-locks inputs pinned by `rev`, not by tag. So the PR needs one human commit: `nix flake update dev-kit`. Until then `nix develop` rewrites the lock in CI, and jobs that check for a clean working tree (dev-kit's `diff-check`) fail. The PR body says so
 - Tracks Go tool versions in `tools.lock`
-- Adds an `automerge` label to digest and patch PRs (the signal the auto-approve workflow reacts to); minor, major, and security PRs never get it
+- Adds an `automerge` label to digest and patch PRs (the signal the auto-approve workflow reacts to); minor, major, security and dev-kit PRs never get it
+- Refreshes `flake.lock` (`nix flake update`) in a weekly lock file maintenance PR (nix manager, opt-in beta). Repos without a `flake.lock` are unaffected. A human merges it: flake inputs like nixpkgs-unstable and go-overlay have no releases a stability window could apply to, and an input without a tag (e.g. an unpinned dev-kit) moves to the tip of its branch
 
 ### `go.json`
 - Runs `go mod tidy` after updates
 - Sets `rangeStrategy: bump` for Go module dependencies
 - Groups Docker and `golang-version` updates for the Go toolchain into a single PR
 - Tracks the Go version in `flake.nix`
+- Relies on the weekly `flake.lock` refresh from `default.json` so the go-overlay input knows the Go versions `flake.nix` asks for. Renovate never groups lock file maintenance with other updates, so a Go bump and its lock refresh are separate PRs. The flake-based CI is the gate: a Go bump whose version the locked go-overlay lacks fails CI and waits until someone merges the lock refresh. go-overlay adds a Go release within hours, well inside the 3-day stability window. A patch bump automerges, so Renovate rebases it once the refresh is on the base branch and CI turns green on its own; a minor bump (e.g. 1.26 → 1.27) doesn't automerge, so it stays red until someone rebases it (tick the rebase box in the PR)
 
 ### `k8s.json`
 - Tracks the Kubernetes version used by `envtest` in `Makefile` (`ENVTEST_K8S_VERSION`)
