@@ -10,6 +10,11 @@
     "automerge": false,
     "addLabels": ["security"]
   },
+  "nix": {
+    "enabled": true,
+    "pinDigests": false,
+    "lockFileMaintenance": { "enabled": true }
+  },
   "packageRules": [
     {
       "description": "Auto-merge patch and digest updates: patch updates wait a 3-day stability window",
@@ -19,7 +24,20 @@
       "minimumReleaseAge": "3 days",
       "schedule": ["before 5am on Monday"],
       "automerge": true,
-      "addLabels": ["ok-to-image", "ok-to-e2e", "automerge"]
+      "addLabels": ["ok-to-image", "ok-to-e2e"]
+    },
+    {
+      "description": "The automerge label (what the auto-approve workflow reacts to) goes on patch and digest updates, except dev-kit's and flake inputs': labels can't be removed by a later rule",
+      "matchUpdateTypes": ["patch", "digest"],
+      "matchPackageNames": ["!opendefensecloud/dev-kit"],
+      "matchManagers": ["!nix"],
+      "addLabels": ["automerge"]
+    },
+    {
+      "description": "Never automerge flake inputs: a rev-pinned input gets digest updates for every upstream commit, with no release a stability window could apply to. Own PR, so it doesn't block the patch & digest group's automerge",
+      "matchManagers": ["nix"],
+      "groupName": null,
+      "automerge": false
     },
     {
       "description": "Skip minimum release age requirement for digest updates since they often lack a release timestamp",
@@ -42,6 +60,20 @@
       "addLabels": ["ok-to-image", "ok-to-e2e"]
     },
     {
+      "description": "Group every opendefensecloud/dev-kit pin (Makefile, flake.nix, GitHub Actions) into one PR. Never automerged: Renovate can't update flake.lock for the flake input, so the PR needs one commit from a human",
+      "matchPackageNames": ["opendefensecloud/dev-kit"],
+      "groupName": "dev-kit",
+      "automerge": false
+    },
+    {
+      "description": "Only dev-kit PRs that change the flake input need the flake.lock commit",
+      "matchPackageNames": ["opendefensecloud/dev-kit"],
+      "matchFileNames": ["**/flake.nix"],
+      "prBodyNotes": [
+        "This PR bumps the dev-kit flake input but not `flake.lock`. Run `nix flake update dev-kit` on this branch and push the result. Until then, CI jobs that check for a clean working tree fail, because `nix develop` rewrites the lock."
+      ]
+    },
+    {
       "description": "Disable digest pinning for tools inside GitHub Actions",
       "matchManagers": ["github-actions"],
       "matchDepNames": ["helm"],
@@ -51,11 +83,12 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Makefile$/"],
+      "managerFilePatterns": ["/(^|/)Makefile$/", "/(^|/)flake\\.nix$/"],
       "matchStrings": [
-        "DEV_KIT_VERSION := (?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
+        "DEV_KIT_VERSION := (?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)",
+        "github:opendefensecloud/dev-kit/(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
-      "datasourceTemplate": "github-releases",
+      "datasourceTemplate": "github-tags",
       "depNameTemplate": "opendefensecloud/dev-kit",
       "versioningTemplate": "semver"
     },
