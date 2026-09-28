@@ -13,7 +13,9 @@
   "nix": {
     "enabled": true,
     "pinDigests": false,
-    "lockFileMaintenance": { "enabled": true }
+    "lockFileMaintenance": {
+      "enabled": true
+    }
   },
   "packageRules": [
     {
@@ -60,13 +62,13 @@
       "addLabels": ["ok-to-image", "ok-to-e2e"]
     },
     {
-      "description": "Group every opendefensecloud/dev-kit pin (Makefile, flake.nix, GitHub Actions) into one PR. Never automerged: Renovate can't update flake.lock for the flake input, so the PR needs one commit from a human",
+      "description": "Group every opendefensecloud/dev-kit pin (Makefile, flake.nix, GitHub Actions and reusable workflows) into one PR. Never automerged: Renovate can't update flake.lock for the flake input, so the PR needs one commit from a human",
       "matchPackageNames": ["opendefensecloud/dev-kit"],
       "groupName": "dev-kit",
       "automerge": false
     },
     {
-      "description": "Only dev-kit PRs that change the flake input need the flake.lock commit",
+      "description": "Tell dev-kit PRs that change the flake input to run nix flake update dev-kit: only those need the flake.lock commit",
       "matchPackageNames": ["opendefensecloud/dev-kit"],
       "matchFileNames": ["**/flake.nix"],
       "prBodyNotes": [
