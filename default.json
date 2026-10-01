@@ -19,7 +19,7 @@
       "minimumReleaseAge": "3 days",
       "schedule": ["before 5am on Monday"],
       "automerge": true,
-      "addLabels": ["ok-to-image", "automerge"]
+      "addLabels": ["ok-to-image", "ok-to-e2e", "automerge"]
     },
     {
       "description": "Skip minimum release age requirement for digest updates since they often lack a release timestamp",
@@ -33,13 +33,13 @@
       "groupSlug": "all-minor-updates",
       "minimumReleaseAge": "3 days",
       "schedule": ["before 5am on Monday"],
-      "addLabels": ["ok-to-image"]
+      "addLabels": ["ok-to-image", "ok-to-e2e"]
     },
     {
       "description": "Set minimum release age requirement for major updates to 10 days",
       "matchUpdateTypes": ["major"],
       "minimumReleaseAge": "10 days",
-      "addLabels": ["ok-to-image"]
+      "addLabels": ["ok-to-image", "ok-to-e2e"]
     },
     {
       "description": "Disable digest pinning for tools inside GitHub Actions",
