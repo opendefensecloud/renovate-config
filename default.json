@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "semanticCommits": "enabled",
+  "gitIgnoredAuthors": ["335510119+dev-kit-bot[bot]@users.noreply.github.com"],
   "pinDigests": true,
   "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
