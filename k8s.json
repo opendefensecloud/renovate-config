@@ -18,7 +18,7 @@
       ],
       "groupName": "kubernetes dependencies",
       "groupSlug": "k8s-updates",
-      "addLabels": ["ok-to-image", "ok-to-helm"]
+      "addLabels": ["ok-to-image", "ok-to-e2e", "ok-to-helm"]
     },
     {
       "description": "Include envtest Kubernetes version (ENVTEST_K8S_VERSION in Makefile) in the same group; version is capped by kindest/node availability",
