@@ -28,6 +28,7 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 - Relies on the `flake.lock` refresh from `default.json` so the `go-overlay` input knows the Go versions `flake.nix` asks for (see [Nix flakes](#nix-flakes))
 
 ### `k8s.json`
+- Adds an `ok-to-helm` label to version update and lock file maintenance PRs so chart-publish CI runs
 - Tracks the Kubernetes version used by `envtest` in `Makefile` (`ENVTEST_K8S_VERSION`)
 - Groups all `k8s.io/**`, `sigs.k8s.io/controller-runtime`, `sigs.k8s.io/controller-tools`, `helm.sh/helm/v4`, `ocm.software/ocm`, and `ENVTEST_K8S_VERSION` updates into a single PR — they share k8s library dependencies and must use the exact same version; bumping any one without the others breaks the build
 
@@ -55,7 +56,7 @@ This config implements a "trust but verify" model that automates low-risk update
 ### Supply-chain security measures
 
 - **Digest pinning** (`pinDigests: true`) — Docker images and GitHub Actions are pinned to immutable SHA-256 digests instead of mutable tags, preventing moving-tag attacks. Flake inputs are the exception (`nix.pinDigests: false`): `flake.lock` already pins every input to a commit, so pinning `nixpkgs` in `flake.nix` as well adds nothing.
-- **Stability window** (`minimumReleaseAge: 3 days` for patches and minor, `10 days` for major) — Renovate will not merge an update until the package version has been published for at least this long. This provides time for the community to detect and flag malicious releases before they land in the codebase. Major updates use a longer 10-day window since they carry more risk and are more prone to early regressions. Digest updates are exempt (`minimumReleaseAge: null`) since a re-pinned digest often carries no meaningful release age. Security updates (vulnerability alerts) bypass the stability window entirely. Their behaviour lives in the `vulnerabilityAlerts` object (`minimumReleaseAge: null`, `automerge: false`, `security` label), which Renovate applies on top of the normal rules for vulnerability-fix PRs. No delay is warranted for known vulnerabilities, and these PRs still need a human.
+- **Stability window** (`minimumReleaseAge: 3 days` for patches and minor, `10 days` for major) — Renovate will not merge an update until the package version has been published for at least this long. This provides time for the community to detect and flag malicious releases before they land in the codebase. Major updates use a longer 10-day window since they carry more risk and are more prone to early regressions. Digest updates have no stability window since a re-pinned digest often carries no meaningful release age. Security updates (vulnerability alerts) bypass the stability window entirely. Their behaviour lives in the `vulnerabilityAlerts` object (`minimumReleaseAge: null`, `automerge: false`, `security` label), which Renovate applies on top of the normal rules for vulnerability-fix PRs. No delay is warranted for known vulnerabilities, and these PRs still need a human.
 
 ### Requirements for auto-merge
 

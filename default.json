@@ -20,14 +20,12 @@
   },
   "packageRules": [
     {
-      "description": "Auto-merge patch and digest updates: patch updates wait a 3-day stability window",
+      "description": "Auto-merge patch and digest updates, grouped into one weekly PR",
       "matchUpdateTypes": ["patch", "digest"],
       "groupName": "dependencies (patch & digest)",
       "groupSlug": "all-patch-and-digest-updates",
-      "minimumReleaseAge": "3 days",
       "schedule": ["before 5am on Monday"],
-      "automerge": true,
-      "addLabels": ["ok-to-image", "ok-to-e2e"]
+      "automerge": true
     },
     {
       "description": "The automerge label (what the auto-approve workflow reacts to) goes on patch and digest updates, except dev-kit's and flake inputs': labels can't be removed by a later rule",
@@ -43,28 +41,25 @@
       "automerge": false
     },
     {
-      "description": "Skip minimum release age requirement for digest updates since they often lack a release timestamp",
-      "matchUpdateTypes": ["digest"],
-      "minimumReleaseAge": null
-    },
-    {
-      "description": "Minor updates: grouped weekly after a 3-day stability window, reviewed by a human",
+      "description": "Minor updates: grouped weekly, reviewed by a human",
       "matchUpdateTypes": ["minor"],
       "groupName": "dependencies (minor)",
       "groupSlug": "all-minor-updates",
-      "minimumReleaseAge": "3 days",
-      "schedule": ["before 5am on Monday"],
-      "addLabels": ["ok-to-image", "ok-to-e2e"]
+      "schedule": ["before 5am on Monday"]
     },
     {
-      "description": "Set minimum release age requirement for major updates to 10 days",
+      "description": "3-day stability window for patch and minor updates. Digest updates get none since they often lack a release timestamp",
+      "matchUpdateTypes": ["patch", "minor"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "10-day stability window for major updates, which are more prone to early regressions",
       "matchUpdateTypes": ["major"],
-      "minimumReleaseAge": "10 days",
-      "addLabels": ["ok-to-image", "ok-to-e2e"]
+      "minimumReleaseAge": "10 days"
     },
     {
-      "description": "Lock file maintenance: flake.lock pins the toolchain that nix-based CI runs, so a refresh gets the same image and e2e runs as other updates",
-      "matchUpdateTypes": ["lockFileMaintenance"],
+      "description": "Version updates and lock file refreshes build images and run e2e",
+      "matchUpdateTypes": ["patch", "digest", "minor", "major", "lockFileMaintenance"],
       "addLabels": ["ok-to-image", "ok-to-e2e"]
     },
     {
@@ -82,7 +77,7 @@
       ]
     },
     {
-      "description": "Disable digest pinning for tools inside GitHub Actions",
+      "description": "Don't pin digests for the helm version that azure/setup-helm installs: Renovate reads its version input as a github-releases dependency named helm",
       "matchManagers": ["github-actions"],
       "matchDepNames": ["helm"],
       "pinDigests": false
