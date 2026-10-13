@@ -63,6 +63,11 @@
       "addLabels": ["ok-to-image", "ok-to-e2e"]
     },
     {
+      "description": "Lock file maintenance: flake.lock pins the toolchain that nix-based CI runs, so a refresh gets the same image and e2e runs as other updates",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "addLabels": ["ok-to-image", "ok-to-e2e"]
+    },
+    {
       "description": "Group every opendefensecloud/dev-kit pin (Makefile, flake.nix, GitHub Actions and reusable workflows) into one PR. Never automerged: Renovate can't update flake.lock for the flake input, so the PR needs one commit from a human",
       "matchPackageNames": ["opendefensecloud/dev-kit"],
       "groupName": "dev-kit",
