@@ -41,7 +41,7 @@ This config implements a "trust but verify" model that automates low-risk update
 | **Minor** | Grouped into one PR, requires manual approval (after 3-day stability window) | Semver promises backwards compatibility, but minors still ship behaviour changes in practice; a human look is cheap on one weekly grouped PR |
 | **Major** | Individual PRs, requires manual approval (after a 10-day stability window) | Breaking changes expected; must be reviewed in isolation; longer window since major releases are more prone to early regressions |
 | **Security** | Individual PR, labeled `security`, requires manual approval, no stability window | Reviewer adds real value here — understanding CVE impact; no delay warranted for known vulnerabilities |
-| **Lock file maintenance** | Own weekly PR, never automerged | Flake inputs have no releases a stability window could apply to |
+| **Lock file maintenance** | Own weekly PR, labeled `ok-to-image` and `ok-to-e2e` (plus `ok-to-helm` with `k8s.json`), never automerged | Flake inputs have no releases a stability window could apply to; `flake.lock` pins the toolchain that nix-based CI runs, so the refresh gets the full CI run |
 
 ### Nix flakes
 

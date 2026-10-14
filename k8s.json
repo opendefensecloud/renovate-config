@@ -2,8 +2,8 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "description": "Add ok-to-helm label to patch, digest, and minor PRs in k8s repos so chart-publish CI runs; unrelated to automerge",
-      "matchUpdateTypes": ["patch", "digest", "minor"],
+      "description": "Add ok-to-helm label to patch, digest, minor, and lock file maintenance PRs in k8s repos so chart-publish CI runs; unrelated to automerge",
+      "matchUpdateTypes": ["patch", "digest", "minor", "lockFileMaintenance"],
       "addLabels": ["ok-to-helm"]
     },
     {
