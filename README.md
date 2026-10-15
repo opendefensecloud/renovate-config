@@ -23,9 +23,9 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 ### `go.json`
 - Runs `go mod tidy` after updates
 - Sets `rangeStrategy: bump` for Go module dependencies
-- Groups Docker and `golang-version` updates for the Go toolchain into a single PR
+- Groups Docker and `golang-version` updates for the Go toolchain into a single PR, with no stability window for the `golang` image: Docker Hub dates it by its last re-push, so the window would hold the Dockerfile back while `go.mod` and `flake.nix` move
 - Tracks the Go version in `flake.nix`
-- Relies on the `flake.lock` refresh from `default.json` so the `go-overlay` input knows the Go versions `flake.nix` asks for (see [Nix flakes](#nix-flakes))
+- Relies on dev-kit's `renovate-dev-kit-lock` workflow to relock `go-overlay` on the Go PR, so it knows the Go version `flake.nix` asks for (see [Nix flakes](#nix-flakes))
 
 ### `k8s.json`
 - Adds an `ok-to-helm` label to version update and lock file maintenance PRs so chart-publish CI runs
@@ -51,7 +51,7 @@ This config implements a "trust but verify" model that automates low-risk update
 - **Lock file maintenance** runs `nix flake update` in its own PR. A human merges it: flake inputs like `nixpkgs-unstable` and `go-overlay` have no releases a stability window could apply to, and an input without a tag (e.g. an unpinned dev-kit) moves to the tip of its branch.
 - **Inputs pinned by `rev`** (`?rev=<sha>`) get an update PR for every upstream commit. These never automerge and get their own PR.
 - **dev-kit bumps** change the flake input through a regex manager, which can't touch `flake.lock`, and the nix manager only re-locks inputs pinned by `rev`, not by tag. So the `dev-kit` PR needs one human commit, `nix flake update dev-kit`, and its PR body says so. Until then `nix develop` rewrites the lock in CI, and jobs that check for a clean working tree (dev-kit's `diff-check`) fail. After a human's commit Renovate treats the branch as edited and stops rebasing or updating it; ticking the rebase box recreates it and drops the lock commit. Commits by `dev-kit-bot[bot]` don't count: `gitIgnoredAuthors` lists the org app that dev-kit's `renovate-dev-kit-lock` workflow commits as, so once a repo calls that workflow, Renovate keeps rebasing.
-- **Go bumps and the lock refresh are separate PRs**, because Renovate never groups lock file maintenance with other updates. The flake-based CI is the gate: a Go bump whose version the locked `go-overlay` lacks fails CI until someone merges the lock refresh. `go-overlay` adds a Go release within hours, well inside the 3-day stability window. A patch bump automerges, so Renovate rebases it once the refresh is on the base branch and CI turns green on its own. A minor bump (e.g. 1.26 -> 1.27) doesn't automerge, so it stays red until someone rebases it (tick the rebase box in the PR).
+- **Go bumps relock `go-overlay` in the same PR**, through dev-kit's `renovate-dev-kit-lock` workflow (v3.1.0+): on `renovate/go-version` it runs `nix flake update go-overlay` and commits the lock as `dev-kit-bot[bot]`, so Renovate keeps rebasing and a patch bump still automerges. `go-overlay` adds a Go release up to a day after it ships, inside the 3-day stability window; if it hasn't yet, the relock job fails and can be re-run. Repos without that workflow fall back to the weekly lock refresh: the Go bump stays red until it is merged and the bump rebased.
 
 ### Supply-chain security measures
 

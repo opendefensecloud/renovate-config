@@ -12,6 +12,12 @@
       "matchPackageNames": ["go", "golang"],
       "groupName": "golang version sync",
       "groupSlug": "go-version"
+    },
+    {
+      "description": "No stability window for the golang image: Docker Hub's timestamp is the last re-push, reset by every base-image rebuild, so the window holds the Dockerfile back while go.mod and flake.nix move. The golang-version release age gates the group",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["golang"],
+      "minimumReleaseAge": null
     }
   ],
   "customManagers": [
