@@ -13,12 +13,13 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 ### `default.json`
 - Extends `config:recommended`
 - Conventional commit messages (`semanticCommits: enabled`)
+- No hourly limit on new PRs (`prHourlyLimit: 0`): a scheduled window often gets a single Renovate run, and with Renovate's default of 2, unscheduled PRs (major, security, dev-kit, flake inputs) can take both slots and push a scheduled PR to the next week. The default limit of 10 open PRs per repo still applies
 - Pins Docker images and GitHub Actions to SHA digests (`pinDigests: true`) to prevent moving-tag attacks
 - Tracks `opendefensecloud/dev-kit` tags in `Makefile` (`DEV_KIT_VERSION`) and in the `flake.nix` input (`github:opendefensecloud/dev-kit/vX.Y.Z` only), through `github-tags` like the GitHub Actions pins
 - Groups every dev-kit pin (`Makefile`, `flake.nix`, GitHub Actions and reusable workflows) into one `dev-kit` PR that is never automerged (see [Nix flakes](#nix-flakes))
 - Tracks Go tool versions in `tools.lock`
 - Adds an `automerge` label to digest and patch PRs (the signal the auto-approve workflow reacts to); minor, major, security, dev-kit and flake-input PRs never get it
-- Refreshes `flake.lock` in a lock file maintenance PR on Renovate's default schedule (weekly), merged by a human (see [Nix flakes](#nix-flakes))
+- Refreshes `flake.lock` in a lock file maintenance PR before 6am (UTC) on Wednesdays, merged by a human (see [Nix flakes](#nix-flakes))
 
 ### `go.json`
 - Runs `go mod tidy` after updates
@@ -42,13 +43,13 @@ This config implements a "trust but verify" model that automates low-risk update
 | **Minor** | Grouped into one PR, requires manual approval (after 3-day stability window) | Semver promises backwards compatibility, but minors still ship behaviour changes in practice; a human look is cheap on one weekly grouped PR |
 | **Major** | Individual PRs, requires manual approval (after a 10-day stability window) | Breaking changes expected; must be reviewed in isolation; longer window since major releases are more prone to early regressions |
 | **Security** | Individual PR, labeled `security`, requires manual approval, no stability window | Reviewer adds real value here — understanding CVE impact; no delay warranted for known vulnerabilities |
-| **Lock file maintenance** | Own weekly PR, labeled `ok-to-image` and `ok-to-e2e` (plus `ok-to-helm` with `k8s.json`), never automerged | Flake inputs have no releases a stability window could apply to; `flake.lock` pins the toolchain that nix-based CI runs, so the refresh gets the full CI run |
+| **Lock file maintenance** | Own weekly PR on Wednesday, labeled `ok-to-image` and `ok-to-e2e` (plus `ok-to-helm` with `k8s.json`), never automerged | Flake inputs have no releases a stability window could apply to; `flake.lock` pins the toolchain that nix-based CI runs, so the refresh gets the full CI run |
 
 ### Nix flakes
 
 `default.json` enables Renovate's nix manager (opt-in beta). Repos without a `flake.lock` are unaffected.
 
-- **Lock file maintenance** runs `nix flake update` in its own PR. A human merges it: flake inputs like `nixpkgs-unstable` and `go-overlay` have no releases a stability window could apply to, and an input without a tag (e.g. an unpinned dev-kit) moves to the tip of its branch.
+- **Lock file maintenance** runs `nix flake update` in its own PR on Wednesdays, two days after the Monday groups. By then the patch group has automerged, so a repo that requires up-to-date branches doesn't rebase the refresh onto that merge (each push reruns image builds and e2e). A midweek merge that touches `flake.lock`, such as a minor Go bump, still conflicts and triggers a rebase. A human merges it: flake inputs like `nixpkgs-unstable` and `go-overlay` have no releases a stability window could apply to, and an input without a tag (e.g. an unpinned dev-kit) moves to the tip of its branch.
 - **Inputs pinned by `rev`** (`?rev=<sha>`) get an update PR for every upstream commit. These never automerge and get their own PR.
 - **dev-kit bumps** change the flake input through a regex manager, which can't touch `flake.lock`, and the nix manager only re-locks inputs pinned by `rev`, not by tag. So the `dev-kit` PR needs one human commit, `nix flake update dev-kit`, and its PR body says so. Until then `nix develop` rewrites the lock in CI, and jobs that check for a clean working tree (dev-kit's `diff-check`) fail. After a human's commit Renovate treats the branch as edited and stops rebasing or updating it; ticking the rebase box recreates it and drops the lock commit. Commits by `dev-kit-bot[bot]` don't count: `gitIgnoredAuthors` lists the org app that dev-kit's `renovate-dev-kit-lock` workflow commits as, so once a repo calls that workflow, Renovate keeps rebasing.
 - **Go bumps relock `go-overlay` in the same PR**, through dev-kit's `renovate-dev-kit-lock` workflow (v3.1.0+): on `renovate/go-version` it runs `nix flake update go-overlay` and commits the lock as `dev-kit-bot[bot]`, so Renovate keeps rebasing and a patch bump still automerges. `go-overlay` adds a Go release up to a day after it ships, inside the 3-day stability window; if it hasn't yet, the relock job fails and can be re-run. Repos without that workflow fall back to the weekly lock refresh: the Go bump stays red until it is merged and the bump rebased.
