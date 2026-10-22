@@ -20,6 +20,13 @@
       "groupSlug": "k8s-updates"
     },
     {
+      "description": "No digest updates for kube-openapi: it has no releases, so its digests follow Kubernetes master and can need newer libraries than the pinned k8s.io/* minor (structured-merge-diff v7 vs v6 broke artifact-conduit). The k8s group bump moves it via go mod tidy instead",
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["k8s.io/kube-openapi"],
+      "matchUpdateTypes": ["digest"],
+      "enabled": false
+    },
+    {
       "description": "Include envtest Kubernetes version (ENVTEST_K8S_VERSION in Makefile) in the same group; version is capped by kindest/node availability",
       "matchPackageNames": ["kindest/node"],
       "groupName": "kubernetes dependencies",
