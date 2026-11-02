@@ -14,6 +14,7 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 - Extends `config:recommended`
 - Conventional commit messages (`semanticCommits: enabled`)
 - Pins Docker images and GitHub Actions to SHA digests (`pinDigests: true`) to prevent moving-tag attacks
+- Writes the exact version next to action and reusable-workflow pins whose upstream has `vX.Y.Z` tags (`# v4.7.0`, not `# v4`, via `helpers:pinGitHubActionDigestsToSemver`), so a release updates the comment together with the SHA, as dev-kit's `update-action-pins` check requires. Actions without such tags keep their comment, and a re-pointed tag still moves the SHA alone; the check flags that on purpose
 - Tracks `opendefensecloud/dev-kit` tags in `Makefile` (`DEV_KIT_VERSION`) and in the `flake.nix` input (`github:opendefensecloud/dev-kit/vX.Y.Z` only), through `github-tags` like the GitHub Actions pins
 - Groups every dev-kit pin (`Makefile`, `flake.nix`, GitHub Actions and reusable workflows) into one `dev-kit` PR that is never automerged (see [Nix flakes](#nix-flakes))
 - Tracks Go tool versions in `tools.lock`

@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigestsToSemver"],
   "semanticCommits": "enabled",
   "gitIgnoredAuthors": ["335510119+dev-kit-bot[bot]@users.noreply.github.com"],
   "pinDigests": true,
