@@ -7,14 +7,13 @@
       "addLabels": ["ok-to-helm"]
     },
     {
-      "description": "Group k8s.io/*, controller-runtime, controller-tools, Helm v4, and OCM together — they share k8s library dependencies and must use the exact same version; bumping any one without the others breaks the build",
+      "description": "Group k8s.io/*, controller-runtime, controller-tools, and Helm v4 together — they share k8s library dependencies and must use the exact same version; bumping any one without the others breaks the build",
       "matchManagers": ["gomod"],
       "matchPackageNames": [
         "k8s.io/**",
         "sigs.k8s.io/controller-runtime",
         "sigs.k8s.io/controller-tools",
-        "helm.sh/helm/v4",
-        "ocm.software/ocm"
+        "helm.sh/helm/v4"
       ],
       "groupName": "kubernetes dependencies",
       "groupSlug": "k8s-updates"
