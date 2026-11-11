@@ -32,6 +32,7 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 - Adds an `ok-to-helm` label to version update and lock file maintenance PRs so chart-publish CI runs
 - Tracks the Kubernetes version used by `envtest` in `Makefile` (`ENVTEST_K8S_VERSION`)
 - Groups all `k8s.io/**`, `sigs.k8s.io/controller-runtime`, `sigs.k8s.io/controller-tools`, `helm.sh/helm/v4`, `ocm.software/ocm`, and `ENVTEST_K8S_VERSION` updates into a single PR — they share k8s library dependencies and must use the exact same version; bumping any one without the others breaks the build
+- Never proposes a `sigs.k8s.io/structured-merge-diff` major on its own: the major follows `k8s.io/apimachinery` and generated apply configurations, and arrives with the Kubernetes group bump
 
 ## Dependency Update Workflow
 
