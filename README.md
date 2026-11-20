@@ -17,10 +17,9 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 - Pins Docker images and GitHub Actions to SHA digests (`pinDigests: true`) to prevent moving-tag attacks
 - Writes the exact version next to action and reusable-workflow pins whose upstream has `vX.Y.Z` tags (`# v4.7.0`, not `# v4`, via `helpers:pinGitHubActionDigestsToSemver`), so a release updates the comment together with the SHA, as dev-kit's `update-action-pins` check requires. Actions without such tags keep their comment, and a re-pointed tag still moves the SHA alone; the check flags that on purpose
 - Tracks `opendefensecloud/dev-kit` tags in `Makefile` (`DEV_KIT_VERSION`) and in the `flake.nix` input (`github:opendefensecloud/dev-kit/vX.Y.Z` only), through `github-tags` like the GitHub Actions pins
-- Groups every dev-kit pin (`Makefile`, `flake.nix`, GitHub Actions and reusable workflows) into one `dev-kit` PR that is never automerged (see [Nix flakes](#nix-flakes))
+- Groups every dev-kit pin (`Makefile`, `flake.nix`, GitHub Actions and reusable workflows) into one `dev-kit` PR (see [Nix flakes](#nix-flakes))
 - Tracks Go tool versions in `tools.lock`
-- Adds an `automerge` label to digest and patch PRs (the signal the auto-approve workflow reacts to); minor, major, security, dev-kit and flake-input PRs never get it
-- Refreshes `flake.lock` in a lock file maintenance PR before 6am (UTC) on Wednesdays, merged by a human (see [Nix flakes](#nix-flakes))
+- Refreshes `flake.lock` in a lock file maintenance PR before 6am (UTC) on Wednesdays (see [Nix flakes](#nix-flakes))
 
 ### `go.json`
 - Runs `go mod tidy` after updates
@@ -37,70 +36,29 @@ Shared [Renovate](https://docs.renovatebot.com/) presets for the `opendefenseclo
 
 ## Dependency Update Workflow
 
-This config implements a "trust but verify" model that automates low-risk updates while keeping humans in the loop for anything that could introduce breaking changes.
+Every update PR is merged by a human. Low-risk updates are grouped into one weekly PR to keep that cheap.
 
 | Update type | Behaviour | Rationale |
 |---|---|---|
-| **Patch, Digest** | Grouped into one PR, auto-merged once CI passes (patch updates after a 3-day stability window; digest updates immediately) | Low breaking-change risk; 3-day window on patches catches most supply-chain incidents before they hit us |
+| **Patch, Digest** | Grouped into one weekly PR, merged by a human (patch updates after a 3-day stability window; digest updates immediately) | Low breaking-change risk; 3-day window on patches catches most supply-chain incidents before they hit us |
 | **Minor** | Grouped into one PR, requires manual approval (after 3-day stability window) | Semver promises backwards compatibility, but minors still ship behaviour changes in practice; a human look is cheap on one weekly grouped PR |
 | **Major** | Individual PRs, requires manual approval (after a 10-day stability window) | Breaking changes expected; must be reviewed in isolation; longer window since major releases are more prone to early regressions |
 | **Security** | Individual PR, labeled `security`, requires manual approval, no stability window | Reviewer adds real value here — understanding CVE impact; no delay warranted for known vulnerabilities |
-| **Lock file maintenance** | Own weekly PR on Wednesday, labeled `ok-to-image` and `ok-to-e2e` (plus `ok-to-helm` with `k8s.json`), never automerged | Flake inputs have no releases a stability window could apply to; `flake.lock` pins the toolchain that nix-based CI runs, so the refresh gets the full CI run |
+| **Lock file maintenance** | Own weekly PR on Wednesday, labeled `ok-to-image` and `ok-to-e2e` (plus `ok-to-helm` with `k8s.json`) | Flake inputs have no releases a stability window could apply to; `flake.lock` pins the toolchain that nix-based CI runs, so the refresh gets the full CI run |
 
 ### Nix flakes
 
 `default.json` enables Renovate's nix manager (opt-in beta). Repos without a `flake.lock` are unaffected.
 
-- **Lock file maintenance** runs `nix flake update` in its own PR on Wednesdays, two days after the Monday groups. By then the patch group has automerged, so a repo that requires up-to-date branches doesn't rebase the refresh onto that merge (each push reruns image builds and e2e). A midweek merge that touches `flake.lock`, such as a minor Go bump, still conflicts and triggers a rebase. A human merges it: flake inputs like `nixpkgs-unstable` and `go-overlay` have no releases a stability window could apply to, and an input without a tag (e.g. an unpinned dev-kit) moves to the tip of its branch.
-- **Inputs pinned by `rev`** (`?rev=<sha>`) get an update PR for every upstream commit. These never automerge and get their own PR.
+- **Lock file maintenance** runs `nix flake update` in its own PR on Wednesdays, two days after the Monday groups. By then the patch group is usually merged, so a repo that requires up-to-date branches doesn't rebase the refresh onto that merge (each push reruns image builds and e2e). A midweek merge that touches `flake.lock`, such as a minor Go bump, still conflicts and triggers a rebase. Flake inputs like `nixpkgs-unstable` and `go-overlay` have no releases a stability window could apply to, and an input without a tag (e.g. an unpinned dev-kit) moves to the tip of its branch.
+- **Inputs pinned by `rev`** (`?rev=<sha>`) get their own update PR for every upstream commit.
 - **dev-kit bumps** change the flake input through a regex manager, which can't touch `flake.lock`, and the nix manager only re-locks inputs pinned by `rev`, not by tag. So the `dev-kit` PR needs one human commit, `nix flake update dev-kit`, and its PR body says so. Until then `nix develop` rewrites the lock in CI, and jobs that check for a clean working tree (dev-kit's `diff-check`) fail. After a human's commit Renovate treats the branch as edited and stops rebasing or updating it; ticking the rebase box recreates it and drops the lock commit. Commits by `dev-kit-bot[bot]` don't count: `gitIgnoredAuthors` lists the org app that dev-kit's `renovate-dev-kit-lock` workflow commits as, so once a repo calls that workflow, Renovate keeps rebasing.
-- **Go bumps relock `go-overlay` in the same PR**, through dev-kit's `renovate-dev-kit-lock` workflow (v3.1.0+): on `renovate/go-version` it runs `nix flake update go-overlay` and commits the lock as `dev-kit-bot[bot]`, so Renovate keeps rebasing and a patch bump still automerges. `go-overlay` adds a Go release up to a day after it ships, inside the 3-day stability window; if it hasn't yet, the relock job fails and can be re-run. Repos without that workflow fall back to the weekly lock refresh: the Go bump stays red until it is merged and the bump rebased.
+- **Go bumps relock `go-overlay` in the same PR**, through dev-kit's `renovate-dev-kit-lock` workflow (v3.1.0+): on `renovate/go-version` it runs `nix flake update go-overlay` and commits the lock as `dev-kit-bot[bot]`, so Renovate keeps rebasing the branch. `go-overlay` adds a Go release up to a day after it ships, inside the 3-day stability window; if it hasn't yet, the relock job fails and can be re-run. Repos without that workflow fall back to the weekly lock refresh: the Go bump stays red until it is merged and the bump rebased.
 
 ### Supply-chain security measures
 
 - **Digest pinning** (`pinDigests: true`) — Docker images and GitHub Actions are pinned to immutable SHA-256 digests instead of mutable tags, preventing moving-tag attacks. Flake inputs are the exception (`nix.pinDigests: false`): `flake.lock` already pins every input to a commit, so pinning `nixpkgs` in `flake.nix` as well adds nothing.
-- **Stability window** (`minimumReleaseAge: 3 days` for patches and minor, `10 days` for major) — Renovate will not merge an update until the package version has been published for at least this long. This provides time for the community to detect and flag malicious releases before they land in the codebase. Major updates use a longer 10-day window since they carry more risk and are more prone to early regressions. Digest updates have no stability window since a re-pinned digest often carries no meaningful release age. Security updates (vulnerability alerts) bypass the stability window entirely. Their behaviour lives in the `vulnerabilityAlerts` object (`minimumReleaseAge: null`, `automerge: false`, `security` label), which Renovate applies on top of the normal rules for vulnerability-fix PRs. No delay is warranted for known vulnerabilities, and these PRs still need a human.
-
-### Requirements for auto-merge
-
-Renovate auto-merge requires:
-1. The Renovate GitHub App has **write** permission on the target repository.
-2. Branch protection rules require **at least one passing status check** before merge (Renovate waits for all required checks).
-3. `automergeType` defaults to `"pr"` — Renovate merges the PR after all required checks pass, not by force-pushing to the branch. If branch protection requires a manual review, Renovate must be exempted.
-
-## Enabling automerge in a consuming repo
-
-The presets set `automerge: true` for digest and patch updates, but Renovate cannot approve its own PRs. Two things unblock it per repo.
-
-### 1. Call the auto-approve workflow
-
-The reusable workflow lives in [`opendefensecloud/dev-kit`](https://github.com/opendefensecloud/dev-kit). Repos that copy dev-kit's `example/` already ship this caller. Otherwise add `.github/workflows/renovate-auto-approve.yml`:
-
-```yaml
-name: renovate-auto-approve
-on:
-  pull_request:
-    types: [opened, reopened, synchronize, labeled, unlabeled]
-permissions:
-  pull-requests: write
-jobs:
-  approve:
-    uses: opendefensecloud/dev-kit/.github/workflows/renovate-auto-approve.yml@<sha-or-tag>
-    permissions:
-      pull-requests: write
-```
-
-Pin `@<sha-or-tag>` to a released tag or commit SHA, same discipline we apply to actions and images. The workflow approves only PRs carrying the `automerge` label and skips any PR labeled `security`, so digest/patch updates get approved automatically while minor, major, and security updates wait for a human. If a PR gains the `security` label after it was auto-approved, the workflow revokes its approval (via a `request-changes` review) so a human is required again. It triggers on the `labeled` and `unlabeled` events for this reason (so adding or removing `security` re-evaluates the PR), so keep those in the caller's `pull_request` types.
-
-### 2. Configure GitHub settings
-
-- **Settings -> Actions -> General -> Workflow permissions:** enable ["Allow GitHub Actions to create and approve pull requests"](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#preventing-github-actions-from-creating-or-approving-pull-requests). Without this, the workflow's approval is rejected.
-- **Branch ruleset on the default branch:**
-  - Require the CI / e2e status checks to pass. This is the gate that replaces the human for these update types.
-  - Require 1 approving review, which the workflow provides for eligible PRs.
-  - Give the Renovate app write access and allow auto-merge, so the PR merges once checks pass and the approval is in.
-
-The approval is authored by `github-actions[bot]`, so a `Require review from Code Owners` rule wont be satisfied by it. If a repo needs that, run the approval step with a dedicated GitHub App or PAT token instead.
+- **Stability window** (`minimumReleaseAge: 3 days` for patches and minor, `10 days` for major) — Renovate holds back an update until the package version has been published for at least this long. This provides time for the community to detect and flag malicious releases before they land in the codebase. Major updates use a longer 10-day window since they carry more risk and are more prone to early regressions. Digest updates have no stability window since a re-pinned digest often carries no meaningful release age. Security updates (vulnerability alerts) bypass the stability window entirely. Their behaviour lives in the `vulnerabilityAlerts` object (`minimumReleaseAge: null`, `security` label), which Renovate applies on top of the normal rules for vulnerability-fix PRs. No delay is warranted for known vulnerabilities.
 
 ## Usage
 
