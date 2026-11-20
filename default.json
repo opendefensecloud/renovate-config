@@ -9,7 +9,6 @@
   "vulnerabilityAlerts": {
     "schedule": [],
     "minimumReleaseAge": null,
-    "automerge": false,
     "addLabels": ["security"]
   },
   "nix": {
@@ -22,25 +21,16 @@
   },
   "packageRules": [
     {
-      "description": "Auto-merge patch and digest updates, grouped into one weekly PR",
+      "description": "Group patch and digest updates into one weekly PR",
       "matchUpdateTypes": ["patch", "digest"],
       "groupName": "dependencies (patch & digest)",
       "groupSlug": "all-patch-and-digest-updates",
-      "schedule": ["before 5am on Monday"],
-      "automerge": true
+      "schedule": ["before 5am on Monday"]
     },
     {
-      "description": "The automerge label (what the auto-approve workflow reacts to) goes on patch and digest updates, except dev-kit's and flake inputs': labels can't be removed by a later rule",
-      "matchUpdateTypes": ["patch", "digest"],
-      "matchPackageNames": ["!opendefensecloud/dev-kit"],
-      "matchManagers": ["!nix"],
-      "addLabels": ["automerge"]
-    },
-    {
-      "description": "Never automerge flake inputs: a rev-pinned input gets digest updates for every upstream commit, with no release a stability window could apply to. Own PR, so it doesn't block the patch & digest group's automerge",
+      "description": "Flake inputs get their own PR: a rev-pinned input gets digest updates for every upstream commit, with no release a stability window could apply to, and would otherwise hold up the patch & digest group",
       "matchManagers": ["nix"],
-      "groupName": null,
-      "automerge": false
+      "groupName": null
     },
     {
       "description": "Minor updates: grouped weekly, reviewed by a human",
@@ -65,10 +55,9 @@
       "addLabels": ["ok-to-image", "ok-to-e2e"]
     },
     {
-      "description": "Group every opendefensecloud/dev-kit pin (Makefile, flake.nix, GitHub Actions and reusable workflows) into one PR. Never automerged: Renovate can't update flake.lock for the flake input, so the PR needs one commit from a human",
+      "description": "Group every opendefensecloud/dev-kit pin (Makefile, flake.nix, GitHub Actions and reusable workflows) into one PR. Renovate can't update flake.lock for the flake input, so the PR needs one commit from a human",
       "matchPackageNames": ["opendefensecloud/dev-kit"],
-      "groupName": "dev-kit",
-      "automerge": false
+      "groupName": "dev-kit"
     },
     {
       "description": "Tell dev-kit PRs that change the flake input to run nix flake update dev-kit: only those need the flake.lock commit",
